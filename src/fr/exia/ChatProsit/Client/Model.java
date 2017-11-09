@@ -1,4 +1,4 @@
-package Client;
+package fr.exia.ChatProsit.Client;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

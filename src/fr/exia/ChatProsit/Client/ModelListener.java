@@ -1,4 +1,4 @@
-package Client;
+package fr.exia.ChatProsit.Client;
 
 public interface ModelListener {
 	

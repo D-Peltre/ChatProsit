@@ -1,4 +1,4 @@
-package Client;
+package fr.exia.ChatProsit.Client;
 
 import java.awt.EventQueue;
 
@@ -28,7 +28,7 @@ import javax.swing.SwingConstants;
 
 public class View {
 
-	protected JFrame frame;
+	public JFrame frame;
 	protected JPanel panelLeft;
 	protected JPanel pannelBottom;
 	protected JPanel panelCenter;

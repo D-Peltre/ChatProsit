@@ -1,4 +1,7 @@
-package Client;
+package fr.exia.ChatProsit.Client;
+
+import java.io.IOException;
+import java.net.Socket;
 
 public class Controller implements ModelListener, ViewListener{
 
@@ -18,13 +21,20 @@ public class Controller implements ModelListener, ViewListener{
 	@Override
 	public void onNicknameChanged(String newNickname) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Le nouveau pseudo est :  " + newNickname);
 	}
 
 	@Override
 	public void onMessageSent(String message) {
 		// TODO Auto-generated method stub
-		System.out.println("On envoie le messafe " + message);
+		System.out.println("On envoie le message " + message);
+		
+		try {
+			Socket sock = new Socket("localhost", 500);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			System.err.println("[Client] Impossible de se connecter");
+		}
 		
 	}
 

@@ -14,8 +14,17 @@ import javax.swing.JTextArea;
 import javax.swing.JButton;
 import javax.swing.JTextField;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.swing.JComboBox;
 import javax.swing.JList;
+import javax.swing.SwingConstants;
+
 
 public class View {
 
@@ -23,32 +32,81 @@ public class View {
 	protected JPanel panelLeft;
 	protected JPanel pannelBottom;
 	protected JPanel panelCenter;
-	protected JTextField textField;
+	protected JTextField messageField;
 	protected JTextField txtYourName;
 	private JScrollPane scrollPane_1;
+	
+	private List<ViewListener> listeners;
 
-	/**
-	 * Launch the application.
-	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					View window = new View();
-					window.frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
 
 	/**
 	 * Create the application.
 	 */
 	public View() {
 		initialize();
+		this.listeners = new ArrayList<>();
 	}
+	
+	
+	
+	
+	public void addListener(ViewListener listener) {
+		this.listeners.add(listener);
+	}
+	
+	public void removeListener(ViewListener listener) {
+		this.listeners.remove(listener);
+	}
+	
+	public void notifyEvent(String methodName, Object... args) {
+		// les trois petits points sont une elipse
+		// Object... = Object [n]
+		
+		
+		//Chercher la bonne methode
+		Method methodCall = null;
+		for(Method method  : ViewListener.class.getMethods()) {
+			if (methodName.equals(method.getName())) {
+				methodCall = method;
+				break;
+			}
+		}
+		
+		if(methodCall == null) {
+			throw new IllegalArgumentException("Event " + methodName + " doesn't exist");
+		}
+		
+		
+		//je parcours la liste de mes observers
+		for (ViewListener listener :this.listeners) {
+			try {
+				//On appelle la methode qu'on a trouve avant et on lui donne 
+				methodCall.invoke(listener, args);
+			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				//System.err.println("Erreur lors du dispatch de l'envent "+ methodName + listener.getClass());
+				e.printStackTrace();
+			}
+			
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	/**
 	 * Initialize the contents of the frame.
@@ -90,6 +148,7 @@ public class View {
 		);
 		
 		txtYourName = new JTextField();
+		txtYourName.setHorizontalAlignment(SwingConstants.CENTER);
 		txtYourName.setFont(new Font("Tahoma", Font.PLAIN, 25));
 		txtYourName.setText("Your NAME");
 		txtYourName.setColumns(10);
@@ -98,7 +157,7 @@ public class View {
 		
 		scrollPane_1 = new JScrollPane();
 		
-		JComboBox comboBox = new JComboBox();
+		JComboBox cypherComboBox = new JComboBox();
 		
 		
 		GroupLayout gl_panelLeft = new GroupLayout(panelLeft);
@@ -107,7 +166,7 @@ public class View {
 				.addGroup(gl_panelLeft.createSequentialGroup()
 					.addContainerGap()
 					.addGroup(gl_panelLeft.createParallelGroup(Alignment.LEADING)
-						.addComponent(comboBox, 0, 148, Short.MAX_VALUE)
+						.addComponent(cypherComboBox, 0, 148, Short.MAX_VALUE)
 						.addComponent(txtYourName, GroupLayout.DEFAULT_SIZE, 148, Short.MAX_VALUE)
 						.addComponent(scrollPane_1, GroupLayout.DEFAULT_SIZE, 148, Short.MAX_VALUE))
 					.addContainerGap())
@@ -120,29 +179,29 @@ public class View {
 					.addGap(13)
 					.addComponent(scrollPane_1, GroupLayout.DEFAULT_SIZE, 443, Short.MAX_VALUE)
 					.addPreferredGap(ComponentPlacement.UNRELATED)
-					.addComponent(comboBox, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)
+					.addComponent(cypherComboBox, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)
 					.addContainerGap())
 		);
 		
-		JList<? extends E> list = new JList();
+		JList list = new JList();
 		scrollPane_1.setViewportView(list);
 		panelLeft.setLayout(gl_panelLeft);
 		
-		textField = new JTextField();
-		textField.setColumns(10);
+		messageField = new JTextField();
+		messageField.setColumns(10);
 		GroupLayout gl_pannelBottom = new GroupLayout(pannelBottom);
 		gl_pannelBottom.setHorizontalGroup(
 			gl_pannelBottom.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_pannelBottom.createSequentialGroup()
 					.addContainerGap()
-					.addComponent(textField, GroupLayout.DEFAULT_SIZE, 1039, Short.MAX_VALUE)
+					.addComponent(messageField, GroupLayout.DEFAULT_SIZE, 1039, Short.MAX_VALUE)
 					.addContainerGap())
 		);
 		gl_pannelBottom.setVerticalGroup(
 			gl_pannelBottom.createParallelGroup(Alignment.LEADING)
 				.addGroup(Alignment.TRAILING, gl_pannelBottom.createSequentialGroup()
 					.addContainerGap()
-					.addComponent(textField, GroupLayout.DEFAULT_SIZE, 37, Short.MAX_VALUE)
+					.addComponent(messageField, GroupLayout.DEFAULT_SIZE, 37, Short.MAX_VALUE)
 					.addContainerGap())
 		);
 		pannelBottom.setLayout(gl_pannelBottom);
@@ -151,9 +210,32 @@ public class View {
 		JScrollPane scrollPane = new JScrollPane();
 		panelCenter.add(scrollPane, "name_161336618528101");
 		
-		JTextArea textArea = new JTextArea();
-		textArea.setEditable(false);
-		scrollPane.setViewportView(textArea);
+		JTextArea messageArea = new JTextArea();
+		messageArea.setEditable(false);
+		scrollPane.setViewportView(messageArea);
 		frame.getContentPane().setLayout(groupLayout);
+		
+		messageField.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e) {
+			//recuperer le texte saisi dans le champs texte 
+			String message = messageField.getText();
+			//notifier l'event
+			notifyEvent("onMessageSent", message);
+			//Vider le champ de formulaire
+			messageField.setText("");
+			}
+		});
+		
+		txtYourName.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e) {
+			//recuperer le texte saisi dans le champs texte 
+			String message = txtYourName.getText();
+			//notifier l'event
+			notifyEvent("onMessageSent", message);
+
+			}
+		});
+		
+		
 	}
 }

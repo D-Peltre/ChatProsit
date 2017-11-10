@@ -1,6 +1,7 @@
 package fr.exia.ChatProsit.Server;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ public class Server implements Runnable{
 			//le thread en boucle qui ouvre les nouvelles connections
 			this.acceptThread = new Thread(this);
 			this.acceptThread.start();
-			System.out.println("[Server] Connection received from" + this.port);
+			System.out.println("[Server] Listening at" + this.port);
 		}
 		
 		public void run() {
@@ -41,14 +42,67 @@ public class Server implements Runnable{
 					//ici une connection a ete reçu sur le port du serveur 
 					System.out.println("[Server] Connection received from " + s.getInetAddress());
 					
-					Client c = new Client(s);
-					this.connectedClients.add(c);
+					Client c = new Client(this, s);
+					//
+					c.startPollingThread();
+					synchronized (connectedClients) {
+						//sauvegarde du client bien initialise
+						this.connectedClients.add(c);
+					}
 				}
 				catch (IOException e) {
-					System.out.println("[Server] Accept error");
+					System.err.println("[Server] Client initialization error");
 					e.printStackTrace();
 				}
 			}
 		}
+
+		public void onClientDisconnected(Client client) {
+			//message de deconnection
+			System.out.println("[Server][" + client.getSocket().getInetAddress() + "] Client has just been disconnected");
+			
+			synchronized (this.connectedClients) {
+				//retirer le client de la liste des clients connectés
+				this.connectedClients.remove(client);
+			}
+			
+		
+		}
+		
+		public void onClientMessage(Client client, String message) {
+			//message de deconnection
+			System.out.println("[Server][" + client.getSocket().getInetAddress() + "] Received message " + message);
+			//propager le message à tous les clients
+			broadcastMessage(client,message);
+		
+		}
+
+		private void broadcastMessage(Client client, String message) {
+			//Protocole
+			String data = "MSG;";
+			data += client.getNickname();
+			data += ";";
+			data += (long)(System.currentTimeMillis() / 1000);
+			data += ";";
+			data += client.getSocket().getInetAddress();
+			data += ";";
+			data += message;
+			// Broadcast
+			broadcast(data);
+		}
+		private void broadcast(String message) {
+			//on fait une copie de la liste
+			ArrayList<Client> copy;
+			synchronized (this.connectedClients) {
+				copy = new ArrayList<>(this.connectedClients);				
+			}
+			
+			for (Client client : copy) {
+				client.write(message);
+			}
+			
+		}
+
+
 
 }

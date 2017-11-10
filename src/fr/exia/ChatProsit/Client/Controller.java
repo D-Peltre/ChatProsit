@@ -1,6 +1,9 @@
 package fr.exia.ChatProsit.Client;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 
 public class Controller implements ModelListener, ViewListener{
@@ -30,7 +33,19 @@ public class Controller implements ModelListener, ViewListener{
 		System.out.println("On envoie le message " + message);
 		
 		try {
+			//ouverture de la connection au serveur
 			Socket sock = new Socket("localhost", 500);
+			PrintWriter out = new PrintWriter(sock.getOutputStream(), true);
+			
+			//receptionner le prochain message
+			BufferedReader in = new BufferedReader( new InputStreamReader(sock.getInputStream()));
+			//envoie du message
+			out.println(message);
+			String rcvd = in.readLine();
+			System.out.println("[Client] Message received " + rcvd);
+			// Fermeture
+			out.close();
+			sock.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			System.err.println("[Client] Impossible de se connecter");
